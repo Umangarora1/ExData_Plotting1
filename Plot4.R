@@ -1,23 +1,23 @@
 library(dplyr)
 library(lubridate)
-datasheet<- read.delim("household_power_consumption.txt", sep=";", stringsAsFactors = TRUE)
+datasheet <- read.delim(
+  "household_power_consumption.txt",
+  sep = ";",
+  na.strings = "?",
+  stringsAsFactors = FALSE
+)
 datasheet$Date <- dmy (datasheet$Date)
 datasheet$Time <- hms (datasheet$Time)
-datasheet$datetime <- datasheet$Date + datasheet$Time
-datasheet$datetime <- 
-  dataset <- subset(datasheet, Date >="2007-02-01" & Date <= "2007-02-02")
-dataset <- dataset %>%
-  mutate(across(c(Global_active_power, 
-                  Global_reactive_power, 
-                  Voltage, 
-                  Global_intensity, 
-                  Sub_metering_1, 
-                  Sub_metering_2),
-                ~ as.numeric(na_if(., "?"))))
+datasheet$datetime <- as.POSIXct(datasheet$Date + datasheet$Time, tz = "UTC")
+dataset <- subset(datasheet, Date >="2007-02-01" & Date <= "2007-02-02")
 
+num_cols <- c("Global_active_power", "Global_reactive_power", "Voltage",
+              "Global_intensity", "Sub_metering_1", "Sub_metering_2", "Sub_metering_3")
+dataset <- dataset %>%
+  mutate(across(all_of(num_cols), ~ as.numeric(.)))
 png(filename="Plot4.png", width = 480, height = 480)
 par(mfrow=c(2,2))
-plot(dataset$datetime,(dataset$Global_active_power)/1000, type="l", xaxt="n",xlab="",ylab="Global Active Power (kilowats)")
+plot(dataset$datetime,(dataset$Global_active_power), type="l", xaxt="n",xlab="",ylab="Global Active Power (kilowats)")
 axis(1, at = pretty(dataset$datetime,n=2), labels = wday(pretty(dataset$datetime,n=2), label = TRUE))
 plot(dataset$datetime,(dataset$Voltage), type="l", xaxt="n",xlab="datetime",ylab="Voltage")
 axis(1, at = pretty(dataset$datetime,n=2), labels = wday(pretty(dataset$datetime,n=2), label = TRUE))
